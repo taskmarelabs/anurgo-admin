@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { getAdminKey, onAdminKeyChange } from './lib/auth.js'
+import { getSession, onSessionChange } from './lib/auth.js'
 import Layout from './components/Layout.jsx'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -12,9 +12,9 @@ import Services from './pages/Services.jsx'
 import Categories from './pages/Categories.jsx'
 
 export default function App() {
-  const [signedIn, setSignedIn] = useState(() => Boolean(getAdminKey()))
+  const [signedIn, setSignedIn] = useState(() => Boolean(getSession()?.token))
 
-  useEffect(() => onAdminKeyChange((key) => setSignedIn(Boolean(key))), [])
+  useEffect(() => onSessionChange((session) => setSignedIn(Boolean(session?.token))), [])
 
   if (!signedIn) return <Login />
 

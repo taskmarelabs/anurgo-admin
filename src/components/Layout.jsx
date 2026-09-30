@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import Icon from './Icon.jsx'
-import { setAdminKey } from '../lib/auth.js'
+import { Avatar, Button, Field, FormError, Modal, inputClass } from './ui.jsx'
+import { useToast } from './Toast.jsx'
+import { getSession } from '../lib/auth.js'
+import { changePassword, logout } from '../lib/api.js'
 import logoFull from '../assets/logo-full.png'
 import logoMark from '../assets/logo-mark.png'
 
@@ -32,6 +35,7 @@ const ALL_ITEMS = NAV.flatMap((g) => g.items)
 
 export default function Layout() {
   const [open, setOpen] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
   const { pathname } = useLocation()
   const current = ALL_ITEMS.find((i) => (i.end ? pathname === i.to : pathname.startsWith(i.to)))
 
@@ -65,24 +69,10 @@ export default function Layout() {
           <p className="truncate text-sm font-semibold text-slate-900">{current?.label ?? 'Admin'}</p>
           <p className="hidden text-xs text-slate-500 sm:block">Anurgo · Prayagraj</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden text-right sm:block">
-            <p className="text-sm font-semibold text-slate-900">Admin</p>
-            <p className="text-xs text-slate-500">Super admin</p>
-          </div>
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-semibold text-white ring-2 ring-white">
-            A
-          </span>
-          <button
-            onClick={() => setAdminKey(null)}
-            title="Sign out"
-            aria-label="Sign out"
-            className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          >
-            <Icon name="logout" />
-          </button>
-        </div>
+        <AccountMenu onChangePassword={() => setChangingPassword(true)} />
       </header>
+
+      <ChangePasswordModal open={changingPassword} onClose={() => setChangingPassword(false)} />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <Outlet />
@@ -138,5 +128,111 @@ function Sidebar({ onClose }) {
 
       <div className="border-t border-white/10 px-5 py-4 text-xs text-white/40">© {new Date().getFullYear()} Anurgo</div>
     </div>
+  )
+}
+
+function AccountMenu({ onChangePassword }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const admin = getSession()?.admin
+
+  useEffect(() => {
+    if (!open) return undefined
+    const onClick = (e) => !ref.current?.contains(e.target) && setOpen(false)
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [open])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-3 rounded-xl p-1 pr-2 hover:bg-slate-100">
+        <div className="hidden text-right sm:block">
+          <p className="text-sm font-semibold text-slate-900">{admin?.name ?? 'Admin'}</p>
+          <p className="text-xs text-slate-500">{admin?.email}</p>
+        </div>
+        <Avatar name={admin?.name ?? 'Admin'} />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg animate-fade-in">
+          <div className="border-b border-slate-100 px-4 py-3 sm:hidden">
+            <p className="text-sm font-semibold text-slate-900">{admin?.name}</p>
+            <p className="truncate text-xs text-slate-500">{admin?.email}</p>
+          </div>
+          <button
+            onClick={() => {
+              setOpen(false)
+              onChangePassword()
+            }}
+            className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            <Icon name="edit" className="h-4 w-4" /> Change password
+          </button>
+          <button onClick={logout} className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
+            <Icon name="logout" className="h-4 w-4" /> Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ChangePasswordModal({ open, onClose }) {
+  const toast = useToast()
+  const [form, setForm] = useState({ current: '', next: '', confirm: '' })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+
+  const close = () => {
+    setForm({ current: '', next: '', confirm: '' })
+    setError(null)
+    onClose()
+  }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (form.next !== form.confirm) return setError('New passwords do not match')
+    setBusy(true)
+    setError(null)
+    try {
+      await changePassword(form.current, form.next)
+      toast('Password changed')
+      close()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+
+  return (
+    <Modal
+      open={open}
+      size="sm"
+      title="Change password"
+      onClose={close}
+      footer={
+        <>
+          <Button variant="secondary" onClick={close}>Cancel</Button>
+          <Button type="submit" form="password-form" disabled={busy || !form.current || !form.next}>
+            {busy ? 'Saving…' : 'Update password'}
+          </Button>
+        </>
+      }
+    >
+      <form id="password-form" onSubmit={submit} className="space-y-4">
+        <Field label="Current password">
+          <input type="password" required autoComplete="current-password" className={inputClass} value={form.current} onChange={set('current')} />
+        </Field>
+        <Field label="New password" hint="At least 8 characters with letters and numbers">
+          <input type="password" required minLength={8} autoComplete="new-password" className={inputClass} value={form.next} onChange={set('next')} />
+        </Field>
+        <Field label="Confirm new password">
+          <input type="password" required autoComplete="new-password" className={inputClass} value={form.confirm} onChange={set('confirm')} />
+        </Field>
+        <FormError error={error} />
+      </form>
+    </Modal>
   )
 }

@@ -1,23 +1,23 @@
-import { getAdminKey, setAdminKey } from './auth.js'
+import { getSession, getToken, setSession } from './auth.js'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
 
-function authHeaders(key = getAdminKey()) {
-  return key ? { 'x-admin-key': key } : {}
-}
-
-async function send(path, { method = 'GET', body, query, key } = {}) {
+async function send(path, { method = 'GET', body, query, anonymous = false } = {}) {
   const params = query
     ? '?' + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== '')).toString()
     : ''
+  const token = anonymous ? null : getToken()
 
   const res = await fetch(`${BASE_URL}${path}${params}`, {
     method,
-    headers: { ...authHeaders(key), ...(body && { 'Content-Type': 'application/json' }) },
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(body && { 'Content-Type': 'application/json' }),
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  if (res.status === 401 && !key) setAdminKey(null)
+  if (res.status === 401 && token) setSession(null)
   return res
 }
 
@@ -30,8 +30,18 @@ async function request(path, options) {
   return json.data
 }
 
-export async function verifyAdminKey(key) {
-  await request('/admin/stats', { key })
+export async function login(email, password) {
+  const data = await request('/admin/auth/login', { method: 'POST', body: { email, password }, anonymous: true })
+  setSession(data)
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const data = await request('/admin/auth/change-password', { method: 'POST', body: { currentPassword, newPassword } })
+  setSession({ ...getSession(), ...data })
+}
+
+export function logout() {
+  setSession(null)
 }
 
 export async function openPartnerDocument(id, docType) {

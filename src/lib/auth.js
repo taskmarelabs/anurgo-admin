@@ -1,31 +1,37 @@
-const STORAGE_KEY = 'anurgo-admin-key'
+const STORAGE_KEY = 'anurgo-admin-session'
 
-let memoryKey = null
+let session
 const listeners = new Set()
 
-export function getAdminKey() {
-  if (memoryKey) return memoryKey
+function readStored() {
   try {
-    memoryKey = localStorage.getItem(STORAGE_KEY)
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) ?? null
   } catch {
-    memoryKey = null
+    return null
   }
-  return memoryKey
 }
 
-export function setAdminKey(key) {
-  memoryKey = key
+export function getSession() {
+  if (session === undefined) session = readStored()
+  return session
+}
+
+export function getToken() {
+  return getSession()?.token ?? null
+}
+
+export function setSession(next) {
+  session = next
   try {
-    if (key) localStorage.setItem(STORAGE_KEY, key)
+    if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
     else localStorage.removeItem(STORAGE_KEY)
   } catch {
-    return
-  } finally {
-    listeners.forEach((fn) => fn(key))
+    session = next
   }
+  listeners.forEach((fn) => fn(next))
 }
 
-export function onAdminKeyChange(fn) {
+export function onSessionChange(fn) {
   listeners.add(fn)
   return () => listeners.delete(fn)
 }
