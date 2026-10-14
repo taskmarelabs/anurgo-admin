@@ -9,7 +9,7 @@ import {
   Modal, PageHeader, RowActions, SearchBox, StatusBadge, Table, Tabs, inputClass,
 } from '../components/ui.jsx'
 
-const EMPTY_FORM = { name: '', slug: '', category: '', startingPrice: '', icon: 'handyman', color: '#1E63E9', sortOrder: 0 }
+const EMPTY_FORM = { name: '', slug: '', category: '', kind: 'service', startingPrice: '', icon: 'handyman', color: '#1E63E9', sortOrder: 0 }
 const STATUS_TABS = ['all', 'active', 'inactive']
 
 const toSlug = (value) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -77,7 +77,7 @@ export default function Services() {
                     </span>
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-slate-900">{s.name}</p>
-                      <p className="text-xs text-slate-500">{s.slug}</p>
+                      <p className="text-xs text-slate-500">{s.slug}{s.kind === 'ride' ? ' · ride' : ''}</p>
                     </div>
                   </div>
                 ),
@@ -129,6 +129,7 @@ export default function Services() {
             items={[
               { label: 'Category', value: viewing.category?.name },
               { label: 'Slug', value: viewing.slug },
+              { label: 'Type', value: viewing.kind === 'ride' ? 'Ride (drivers get ride requests)' : 'Service (bookable jobs)' },
               { label: 'Starting price', value: formatMoney(viewing.startingPrice) },
               { label: 'Approved partners', value: viewing.providerCount },
               { label: 'Completed bookings', value: viewing.bookingsCount },
@@ -198,6 +199,7 @@ const toForm = (s) => ({
   name: s.name,
   slug: s.slug,
   category: s.category?._id ?? '',
+  kind: s.kind ?? 'service',
   startingPrice: s.startingPrice,
   icon: s.icon,
   color: s.color,
@@ -264,14 +266,22 @@ function ServiceForm({ initial, categories, onClose, onSaved }) {
             <input required className={inputClass} value={form.slug} onChange={set('slug')} />
           </Field>
         </div>
-        <Field label="Category">
-          <select required className={inputClass} value={form.category} onChange={set('category')}>
-            <option value="">Select category</option>
-            {categories.map((c) => (
-              <option key={c._id} value={c._id}>{c.name}{c.isActive ? '' : ' (inactive)'}</option>
-            ))}
-          </select>
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Category">
+            <select required className={inputClass} value={form.category} onChange={set('category')}>
+              <option value="">Select category</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}{c.isActive ? '' : ' (inactive)'}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Type" hint="Ride partners register a vehicle and get ride requests">
+            <select className={inputClass} value={form.kind} onChange={set('kind')}>
+              <option value="service">Service (bookable jobs)</option>
+              <option value="ride">Ride (bike / auto / cab)</option>
+            </select>
+          </Field>
+        </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Field label="Starts at ₹">
             <input required type="number" min="0" className={inputClass} value={form.startingPrice} onChange={set('startingPrice')} />

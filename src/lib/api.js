@@ -92,6 +92,18 @@ export const api = {
     get: (id) => request(`/admin/bookings/${id}`),
     cancel: (id, reason) => request(`/admin/bookings/${id}/cancel`, { method: 'PATCH', body: { reason } }),
   },
+  rides: {
+    list: (query) => request('/admin/rides', { query }),
+    get: (id) => request(`/admin/rides/${id}`),
+    cancel: (id, reason) => request(`/admin/rides/${id}/cancel`, { method: 'PATCH', body: { reason } }),
+  },
+  settings: {
+    get: () => request('/admin/settings'),
+    update: (body) => request('/admin/settings', { method: 'PATCH', body }),
+  },
+  notifications: {
+    send: (body) => request('/admin/notifications', { method: 'POST', body }),
+  },
   admin: {
     stats: () => request('/admin/stats'),
     payouts: () => request('/admin/payouts'),

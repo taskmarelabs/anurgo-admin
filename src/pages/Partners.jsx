@@ -79,9 +79,18 @@ export default function Partners() {
                   </div>
                 ),
               },
-              { key: 'service', label: 'Service', render: (p) => p.service?.name ?? '—' },
+              {
+                key: 'service',
+                label: 'Service',
+                render: (p) => (
+                  <div>
+                    <p>{p.service?.name ?? '—'}</p>
+                    {p.vehicle?.type && <p className="text-xs uppercase text-slate-500">{p.vehicle.type} · {p.vehicle.number}</p>}
+                  </div>
+                ),
+              },
               { key: 'experience', label: 'Experience', render: (p) => `${p.experienceYears} yrs` },
-              { key: 'price', label: 'Base price', render: (p) => formatMoney(p.basePrice) },
+              { key: 'price', label: 'Base price', render: (p) => (p.service?.kind === 'ride' ? 'Admin fares' : formatMoney(p.basePrice)) },
               {
                 key: 'docs',
                 label: 'Documents',
@@ -213,7 +222,10 @@ function PartnerView({ id, onClose, onEdit, onAction, statusActions }) {
                 { label: 'Phone', value: p.phone },
                 { label: 'Email', value: p.email },
                 { label: 'Experience', value: `${p.experienceYears} years` },
-                { label: 'Pricing', value: `${formatMoney(p.basePrice)} base · ${formatMoney(p.visitCharge)} visit` },
+                p.vehicle?.type
+                  ? { label: 'Vehicle', value: [p.vehicle.type.toUpperCase(), p.vehicle.number, p.vehicle.model].filter(Boolean).join(' · ') }
+                  : { label: 'Pricing', value: `${formatMoney(p.basePrice)} base · ${formatMoney(p.visitCharge)} visit` },
+                { label: 'Online', value: p.availability?.isOnline ? 'Yes' : 'No' },
                 { label: 'Address', value: `${p.address}, ${p.pincode}`, wide: true },
                 { label: 'Service areas', value: p.serviceAreas?.join(', '), wide: true },
                 {
@@ -288,6 +300,7 @@ const toForm = (p) => ({
   visitCharge: p.visitCharge ?? 0,
   serviceAreas: (p.serviceAreas ?? []).join(', '),
   tasks: (p.tasks ?? []).map((t) => ({ ...t })),
+  vehicle: p.vehicle?.type ? { type: p.vehicle.type, number: p.vehicle.number ?? '', model: p.vehicle.model ?? '' } : null,
 })
 
 function PartnerForm({ partner, onClose, onSaved }) {
@@ -320,6 +333,7 @@ function PartnerForm({ partner, onClose, onSaved }) {
         visitCharge: Number(form.visitCharge),
         serviceAreas: form.serviceAreas.split(',').map((s) => s.trim()).filter(Boolean),
         tasks: form.tasks.filter((t) => t.name.trim()).map((t) => ({ name: t.name.trim(), price: Number(t.price) })),
+        vehicle: form.vehicle ?? undefined,
       })
       onSaved()
     } catch (err) {
@@ -355,6 +369,23 @@ function PartnerForm({ partner, onClose, onSaved }) {
             <Field label="Visit charge ₹"><input required type="number" min="0" className={inputClass} value={form.visitCharge} onChange={set('visitCharge')} /></Field>
           </div>
         </div>
+        {form.vehicle && (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Vehicle type">
+              <select className={inputClass} value={form.vehicle.type} onChange={(e) => setForm({ ...form, vehicle: { ...form.vehicle, type: e.target.value } })}>
+                <option value="bike">Bike</option>
+                <option value="auto">Auto</option>
+                <option value="cab">Cab</option>
+              </select>
+            </Field>
+            <Field label="Vehicle number">
+              <input required className={inputClass} value={form.vehicle.number} onChange={(e) => setForm({ ...form, vehicle: { ...form.vehicle, number: e.target.value } })} />
+            </Field>
+            <Field label="Vehicle model">
+              <input className={inputClass} value={form.vehicle.model} onChange={(e) => setForm({ ...form, vehicle: { ...form.vehicle, model: e.target.value } })} />
+            </Field>
+          </div>
+        )}
         <Field label="Service areas" hint="Comma separated, e.g. Civil Lines, Katra">
           <input className={inputClass} value={form.serviceAreas} onChange={set('serviceAreas')} />
         </Field>

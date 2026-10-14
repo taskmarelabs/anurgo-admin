@@ -88,6 +88,11 @@ const STATUS_STYLES = {
   paid: ['bg-emerald-50 text-emerald-700 ring-emerald-600/20', 'bg-emerald-500'],
   refund_pending: ['bg-amber-50 text-amber-700 ring-amber-600/20', 'bg-amber-500'],
   refunded: ['bg-slate-100 text-slate-600 ring-slate-500/20', 'bg-slate-400'],
+  requested: ['bg-sky-50 text-sky-700 ring-sky-600/20', 'bg-sky-500'],
+  accepted: ['bg-indigo-50 text-indigo-700 ring-indigo-600/20', 'bg-indigo-500'],
+  arrived: ['bg-violet-50 text-violet-700 ring-violet-600/20', 'bg-violet-500'],
+  started: ['bg-amber-50 text-amber-700 ring-amber-600/20', 'bg-amber-500'],
+  expired: ['bg-slate-100 text-slate-600 ring-slate-500/20', 'bg-slate-400'],
 }
 
 export function StatusBadge({ status }) {

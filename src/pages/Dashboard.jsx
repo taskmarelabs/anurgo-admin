@@ -61,6 +61,15 @@ export default function Dashboard() {
               <Stat icon="payouts" tone="amber" label="Pending payouts" value={formatMoney(s.pendingPayout)} hint="Net owed to partners" to="/payouts" />
             </div>
 
+            {s.rides && (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <Stat icon="ride" tone="sky" label="Rides today" value={s.rides.today} hint={`${s.rides.accepted + s.rides.arrived + s.rides.started} on trip now`} to="/rides" />
+                <Stat icon="clock" tone="amber" label="Waiting for driver" value={s.rides.requested} hint="Open ride requests" to="/rides?status=requested" />
+                <Stat icon="check" tone="emerald" label="Rides completed" value={s.rides.completed} hint={`${s.rides.cancelled + s.rides.expired} cancelled / expired`} to="/rides?status=completed" />
+                <Stat icon="partners" tone="violet" label="Drivers online" value={s.rides.onlineDrivers} hint="Sharing live location" to="/partners?status=approved" />
+              </div>
+            )}
+
             <div className="grid gap-4 lg:grid-cols-3">
               <Card className="p-5 lg:col-span-2">
                 <h2 className="text-sm font-semibold text-slate-900">Booking pipeline</h2>

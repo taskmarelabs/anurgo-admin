@@ -17,6 +17,7 @@ const NAV = [
     section: 'Operations',
     items: [
       { to: '/bookings', label: 'Bookings', icon: 'bookings' },
+      { to: '/rides', label: 'Rides', icon: 'ride' },
       { to: '/partners', label: 'Partners', icon: 'partners' },
       { to: '/users', label: 'Customers', icon: 'customers' },
       { to: '/payouts', label: 'Payouts', icon: 'payouts' },
@@ -27,6 +28,13 @@ const NAV = [
     items: [
       { to: '/services', label: 'Services', icon: 'services' },
       { to: '/categories', label: 'Categories', icon: 'categories' },
+    ],
+  },
+  {
+    section: 'Configuration',
+    items: [
+      { to: '/settings', label: 'Rates & settings', icon: 'sliders' },
+      { to: '/notifications', label: 'Send notification', icon: 'bell' },
     ],
   },
 ]

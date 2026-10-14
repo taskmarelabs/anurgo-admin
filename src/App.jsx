@@ -10,6 +10,9 @@ import Users from './pages/Users.jsx'
 import Payouts from './pages/Payouts.jsx'
 import Services from './pages/Services.jsx'
 import Categories from './pages/Categories.jsx'
+import Rides from './pages/Rides.jsx'
+import Settings from './pages/Settings.jsx'
+import Notifications from './pages/Notifications.jsx'
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(() => Boolean(getSession()?.token))
@@ -28,6 +31,9 @@ export default function App() {
         <Route path="payouts" element={<Payouts />} />
         <Route path="services" element={<Services />} />
         <Route path="categories" element={<Categories />} />
+        <Route path="rides" element={<Rides />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
